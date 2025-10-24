@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>校園減碳大作戰</title>
+<style>
+:root{
+  --scale: 0.85;
+  --peopleV-top: 39.45%; --peopleV-left: 22.34%;
+  --foodV-top: 65.06%; --foodV-left: 29.12%;
+  --transportV-top: 64.85%; --transportV-left: 72.95%;
+  --plasticV-top: 83.87%; --plasticV-left: 30.07%;
+  --moveV-top: 83.93%; --moveV-left: 72.01%;
+  --chart-top: 39%; --chart-left: 69%; --chart-width: 60vw; --chart-height: 20vh;
+}
+html, body{
+  margin:0; height:100%; background:#000; color:#111;
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+}
+.stage{
+  position:relative;
+  width:calc(100vw/var(--scale));
+  height:calc(100vh/var(--scale));
+  transform:scale(var(--scale));
+  transform-origin:top left;
+  background:url("./電視牆1024.jpg") center/cover no-repeat;
+  overflow:hidden;
+}
+.val{
+  position:absolute; transform:translate(-50%,-50%);
+  font-weight:800; letter-spacing:1px;
+  text-shadow:0 1px 2px rgba(0,0,0,.15);
+  font-size:5.8vh; color:#0b1b2b;
+}
+#peopleV{ color:#1b1b1b; }
+#foodV{ color:#0a48b3; }
+#transportV{ color:#0a8b4a; }
+#plasticV{ color:#c0392b; }
+#moveV{ color:#e67e22; }
+#peopleV{ top:var(--peopleV-top); left:var(--peopleV-left); }
+#foodV{ top:var(--foodV-top); left:var(--foodV-left); }
+#transportV{ top:var(--transportV-top); left:var(--transportV-left); }
+#plasticV{ top:var(--plasticV-top); left:var(--plasticV-left); }
+#moveV{ top:var(--moveV-top); left:var(--moveV-left); }
+
+.chart-panel{
+  position:absolute;
+  top:var(--chart-top); left:var(--chart-left);
+  width:var(--chart-width); height:var(--chart-height);
+  transform:translate(-50%,-50%) scale(0.9);
+  border-radius:12px; overflow:hidden;
+  background:#ffffff00; box-shadow:0 4px 16px rgba(0,0,0,.25);
+}
+.chart-panel iframe{
+  width:100%; height:100%; border:0; overflow:hidden !important;
+  scrollbar-width:none !important;
+}
+.chart-panel iframe::-webkit-scrollbar { display:none !important; }
+
+#status{
+  position:fixed; left:12px; bottom:12px; z-index:10;
+  background:#fffE; padding:4px 8px; border-radius:8px;
+  font-size:12px; font-weight:500; color:#111; opacity:.85;
+}
+@keyframes tinyPulse{0%,97%,100%{opacity:1}98.5%{opacity:.985}}
+.stage{animation:tinyPulse 300s linear infinite;}
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <div id="peopleV" class="val"><span id="v-people">--</span></div>
+  <div id="foodV" class="val"><span id="v-food">--</span></div>
+  <div id="transportV" class="val"><span id="v-transport">--</span></div>
+  <div id="plasticV" class="val"><span id="v-plastic">--</span></div>
+  <div id="moveV" class="val"><span id="v-move">--</span></div>
+
+  <div class="chart-panel" id="chart-panel">
+    <iframe
+      id="chartFrame"
+      width="100%" height="100%" frameborder="0"
+      scrolling="no" style="overflow:hidden;" seamless
+      src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTA18hRqu4Ch6iF2CukbRUQ0Ef8BDihdak7Cfkl7FzRacgKLc7Mynhvi06jkULpI5W1yBnepZpy61gA/pubchart?oid=558188415&amp;format=interactive"
+      allowfullscreen>
+    </iframe>
+  </div>
+</div>
+
+<div id="status">初始化中…（E 微調 / F 全螢幕 / S 複製座標）</div>
+
+<script>
+const API_EXEC = "https://script.google.com/macros/s/AKfycby7d9Zoo-JCCojFWN6aG10N8v5PYyTs3pjTReAGiuwU3aJoQUkBxU_2-0EBPdziMQcN/exec";
+const REFRESH_MS = 30000;
+const nf = new Intl.NumberFormat('zh-Hant-TW',{ maximumFractionDigits:2 });
+const $=id=>document.getElementById(id);
+const st=t=>$("status").textContent=t;
+
+function show(d){
+  $("v-people").textContent = nf.format(d.people);
+  $("v-food").textContent = nf.format(d.food);
+  $("v-transport").textContent = nf.format(d.transport);
+  $("v-plastic").textContent = nf.format(d.plastic);
+  $("v-move").textContent = nf.format(d.move);
+}
+function onData(payload){
+  try{
+    if(!payload?.ok) throw new Error(payload.error||"API error");
+    show(payload.data);
+    st("✅ 已更新："+payload.data.updatedAt);
+  }catch(e){ st("❌ "+e.message); }
+}
+function loadOnce(){
+  const s=document.createElement("script");
+  s.src=API_EXEC+"?callback=onData&_ts="+Date.now();
+  s.onerror=()=>st("❌ 載入失敗");
+  document.body.appendChild(s);
+}
+loadOnce(); setInterval(loadOnce,REFRESH_MS);
+
+// iframe 同步重載
+const chartFrame=$("chartFrame"), chartBase=chartFrame.src;
+function refreshChart(){
+  chartFrame.src = chartBase + (chartBase.includes('?')?'&':'?') + '_ts=' + Date.now();
+}
+setInterval(refreshChart, REFRESH_MS);
+
+// ✅ 點擊任意地方即可全螢幕
+document.addEventListener("click", () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => console.log(err));
+  }
+});
+document.addEventListener("keydown", e=>{
+  if(e.key.toLowerCase()==="f"){
+    if(!document.fullscreenElement)
+      document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  }
+});
+
+// 微調模式
+let tune=false, active=null, current=null;
+const ids=["peopleV","foodV","transportV","plasticV","moveV","chart-panel"];
+function setDraggable(ok){
+  ids.forEach(id=>{
+    const el=$(id);
+    el.style.pointerEvents=ok?"auto":"none";
+    el.style.cursor=ok?"move":"default";
+  });
+  st(ok?"🛠 微調中（E 退出 / S 複製座標）":"✅ 更新完成（E 微調 / F 全螢幕）");
+}
+document.addEventListener("keydown",e=>{
+  const k=e.key.toLowerCase();
+  if(k==="e"){ tune=!tune; setDraggable(tune); }
+  if(k==="s"&&tune){
+    const g=getComputedStyle(document.documentElement);
+    const vars=ids.map(id=>{
+      const t=g.getPropertyValue(`--${id}-top`).trim();
+      const l=g.getPropertyValue(`--${id}-left`).trim();
+      return `--${id}-top:${t}; --${id}-left:${l};`;
+    }).join("\n");
+    navigator.clipboard.writeText("/* 貼回 :root{} 即可固定 */\n"+vars);
+    alert("已複製座標：\n\n"+vars);
+  }
+});
+ids.forEach(id=>{
+  const el=$(id);
+  el.addEventListener("pointerdown",e=>{if(!tune)return;active=el;current=id;el.setPointerCapture(e.pointerId);});
+  el.addEventListener("pointermove",e=>{
+    if(!tune||active!==el)return;
+    const r=$("stage").getBoundingClientRect();
+    const x=((e.clientX-r.left)/r.width)*100;
+    const y=((e.clientY-r.top)/r.height)*100;
+    document.documentElement.style.setProperty(`--${id}-left`,x.toFixed(2)+"%");
+    document.documentElement.style.setProperty(`--${id}-top`,y.toFixed(2)+"%");
+  });
+  el.addEventListener("pointerup",()=>active=null);
+});
+</script>
+</body>
+</html>
