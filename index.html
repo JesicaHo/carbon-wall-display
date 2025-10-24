@@ -51,33 +51,19 @@ html, body{
   border-radius:12px; overflow:hidden;
   background:#ffffff00; box-shadow:0 4px 16px rgba(0,0,0,.25);
 }
-.chart-panel iframe{ width:100%; height:100%; border:0; }
-.chart-panel iframe {
-  width: 100%;
-  height: 100%;
-  border: 0;
-  overflow: hidden !important;
-  scrollbar-width: none !important; /* Firefox */
+.chart-panel iframe{
+  width:100%; height:100%; border:0; overflow:hidden !important;
+  scrollbar-width:none !important;
 }
-
-.chart-panel iframe::-webkit-scrollbar {
-  display: none !important; /* Chrome、Edge、Safari */
-}
+.chart-panel iframe::-webkit-scrollbar{display:none !important;}
 
 #status{
   position:fixed; left:12px; bottom:12px; z-index:10;
   background:#fffE; padding:6px 10px; border-radius:8px;
-  font:8px system-ui; color:#111;
+  font-size:8px; font-weight:500; color:#111; opacity:.85;
 }
-#fsBtn{
-  position:fixed; right:14px; bottom:14px; z-index:11;
-  border:0; border-radius:10px; padding:10px 14px;
-  font:700 14px system-ui; background:#0a7cff; color:#fff; cursor:pointer;
-  box-shadow:0 6px 18px rgba(0,0,0,.25);
-}
-#fsBtn.hide{ display:none; }
-@keyframes tinyPulse{ 0%,97%,100%{opacity:1} 98.5%{opacity:.985} }
-.stage{ animation: tinyPulse 300s linear infinite; }
+@keyframes tinyPulse{0%,97%,100%{opacity:1}98.5%{opacity:.985}}
+.stage{animation:tinyPulse 300s linear infinite;}
 </style>
 </head>
 <body>
@@ -91,17 +77,15 @@ html, body{
 
   <!-- Google 試算表圖表 -->
   <div class="chart-panel" id="chart-panel">
-  <iframe
-  id="chartFrame"
-  width="100%" height="100%"
-  frameborder="0"
-  scrolling="no"
-  style="overflow:hidden;"
-  seamless
-  src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTA18hRqu4Ch6iF2CukbRUQ0Ef8BDihdak7Cfkl7FzRacgKLc7Mynhvi06jkULpI5W1yBnepZpy61gA/pubchart?oid=558188415&amp;format=interactive"
-  allowfullscreen>
-</iframe>
-
+    <iframe
+      id="chartFrame"
+      width="100%" height="100%"
+      frameborder="0" scrolling="no"
+      style="overflow:hidden;"
+      seamless
+      src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTA18hRqu4Ch6iF2CukbRUQ0Ef8BDihdak7Cfkl7FzRacgKLc7Mynhvi06jkULpI5W1yBnepZpy61gA/pubchart?oid=558188415&amp;format=interactive"
+      allowfullscreen>
+    </iframe>
   </div>
 </div>
 
@@ -143,10 +127,21 @@ function refreshChart(){
 }
 setInterval(refreshChart, REFRESH_MS);
 
-// 全螢幕
-$("fsBtn").onclick=()=>document.documentElement.requestFullscreen?.();
+// ✅ 全螢幕（支援 F 鍵、點擊任意處、Safari 相容）
+function enterFS(){
+  const el=document.documentElement;
+  (el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen||el.mozRequestFullScreen)?.call(el);
+}
+function exitFS(){
+  (document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen||document.mozCancelFullScreen)?.call(document);
+}
 document.addEventListener("keydown",e=>{
-  if(e.key.toLowerCase()==="f") document.documentElement.requestFullscreen?.();
+  if(e.key.toLowerCase()==="f"){
+    document.fullscreenElement ? exitFS() : enterFS();
+  }
+});
+document.addEventListener("click",()=>{
+  if(!document.fullscreenElement) enterFS();
 });
 
 // 微調模式
