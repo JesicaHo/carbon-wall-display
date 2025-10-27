@@ -1,216 +1,311 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1.0" />
-<title>校園減碳大作戰</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>校園減碳大作戰 · 看板版</title>
+<meta name="color-scheme" content="light dark" />
 <style>
-:root{
-  --scale: 0.85;
-  --peopleV-top: 39.45%; --peopleV-left: 22.34%;
-  --foodV-top: 65.06%; --foodV-left: 29.12%;
-  --transportV-top: 64.85%; --transportV-left: 72.95%;
-  --plasticV-top: 83.87%; --plasticV-left: 30.07%;
-  --moveV-top: 83.93%; --moveV-left: 72.01%;
-  --chart-top: 38%; --chart-left: 69%; --chart-width: 62vw; --chart-height: 22vh;
+  :root{
+    /* === 可調參數（也支援以 URL Query 覆蓋） === */
+    --scale: 0.85;                /* 版面縮放 */
+    --refresh-ms: 30000;          /* 資料/圖表重載週期(ms) */
+    --autofs: 1;                  /* 自動嘗試進入全螢幕 (1|0) */
+
+    /* === 位置座標（微調模式會即時更新 & 可儲存） === */
+    --peopleV-top: 39.45%; --peopleV-left: 22.34%;
+    --foodV-top: 65.06%; --foodV-left: 29.12%;
+    --transportV-top: 64.85%; --transportV-left: 72.95%;
+    --plasticV-top: 83.87%; --plasticV-left: 30.07%;
+    --moveV-top: 83.93%; --moveV-left: 72.01%;
+
+    --chart-top: 38%; --chart-left: 69%;
+    --chart-width: 62vw; --chart-height: 22vh;
+  }
+
+  html, body{
+    margin:0; height:100%; background:#000; color:#111;
+    font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  }
+  .stage{
+    position:relative;
+    width:calc(100vw/var(--scale));
+    height:calc(100vh/var(--scale));
+    transform:scale(var(--scale));
+    transform-origin:top left;
+    background:url("./電視牆1024.jpg") center/cover no-repeat;
+    overflow:hidden;
+    animation:tinyPulse 300s linear infinite; /* 超低頻，避免燒螢幕 */
+  }
+  @keyframes tinyPulse{0%,97%,100%{opacity:1}98.5%{opacity:.985}}
+  @media (prefers-reduced-motion: reduce){ .stage{ animation: none; } }
+
+  .val{
+    position:absolute; transform:translate(-50%,-50%);
+    font-weight:800; letter-spacing:1px;
+    text-shadow:0 1px 2px rgba(0,0,0,.15);
+    font-size:5.8vh; color:#0b1b2b;
+    user-select:none;
+  }
+  #peopleV{ color:#1b1b1b; top:var(--peopleV-top); left:var(--peopleV-left); }
+  #foodV{ color:#0a48b3; top:var(--foodV-top); left:var(--foodV-left); }
+  #transportV{ color:#0a8b4a; top:var(--transportV-top); left:var(--transportV-left); }
+  #plasticV{ color:#c0392b; top:var(--plasticV-top); left:var(--plasticV-left); }
+  #moveV{ color:#e67e22; top:var(--moveV-top); left:var(--moveV-left); }
+
+  .chart-panel{
+    position:absolute;
+    top:var(--chart-top); left:var(--chart-left);
+    width:var(--chart-width); height:var(--chart-height);
+    transform:translate(-50%,-50%) scale(0.9);
+    border-radius:12px; overflow:hidden;
+    background:#ffffff00; box-shadow:0 4px 16px rgba(0,0,0,.25);
+  }
+  .chart-panel iframe{
+    width:100%; height:100%; border:0; overflow:hidden !important;
+    scrollbar-width:none !important;
+  }
+  .chart-panel iframe::-webkit-scrollbar{display:none !important;}
+
+  #status{
+    position:fixed; left:12px; bottom:12px; z-index:10;
+    background:#fffE; padding:6px 10px; border-radius:8px;
+    font-size:12px; font-weight:600; color:#111; opacity:.9;
+  }
+  #status[hidden]{ display:none; }
+  
+  /* === 直立螢幕預設座標（Portrait Preset A） ===
+     若螢幕較窄（手機/直立看板），自動改成四象限排版，
+     讓長條圖在上方、四大指標在下方兩排。可再按 E 微調、S 儲存。 */
+  @media (max-aspect-ratio: 10/16){
+    :root{
+      --scale: 0.86;
+      /* 圖表置中偏上、加寬 */
+      --chart-top: 38.3%;
+      --chart-left: 69.7%;
+      --chart-width: 74.8vw;
+      --chart-height: 26vh;
+      /* 指標分四象限：左上/右上/左下/右下 */
+      --peopleV-top: 42%;  --peopleV-left: 20%;  /* 可用於放「人次」或其他數值 */
+      --foodV-top: 58%;    --foodV-left: 28%;
+      --transportV-top: 58%; --transportV-left: 72%;
+      --plasticV-top: 78%; --plasticV-left: 28%;
+      --moveV-top: 78%;    --moveV-left: 72%;
     }
     .val{ font-size: 6.2vh; }
     .chart-panel{ transform: translate(-50%,-50%) scale(0.73); }
   }
-html, body{
-  margin:0; height:100%; background:#000; color:#111;
-  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
-}
-.stage{
-  position:relative;
-  width:calc(100vw/var(--scale));
-  height:calc(100vh/var(--scale));
-  transform:scale(var(--scale));
-  transform-origin:top left;
-  background:url("./電視牆1024.jpg") center/cover no-repeat;
-  overflow:hidden;
-}
-.val{
-  position:absolute; transform:translate(-50%,-50%);
-  font-weight:800; letter-spacing:1px;
-  text-shadow:0 1px 2px rgba(0,0,0,.15);
-  font-size:5.8vh; color:#0b1b2b;
-}
-#peopleV{ color:#1b1b1b; }
-#foodV{ color:#0a48b3; }
-#transportV{ color:#0a8b4a; }
-#plasticV{ color:#c0392b; }
-#moveV{ color:#e67e22; }
-#peopleV{ top:var(--peopleV-top); left:var(--peopleV-left); }
-#foodV{ top:var(--foodV-top); left:var(--foodV-left); }
-#transportV{ top:var(--transportV-top); left:var(--transportV-left); }
-#plasticV{ top:var(--plasticV-top); left:var(--plasticV-left); }
-#moveV{ top:var(--moveV-top); left:var(--moveV-left); }
-.chart-panel{
-  position:absolute;
-  top:var(--chart-top); left:var(--chart-left);
-  width:var(--chart-width); height:var(--chart-height);
-  transform:translate(-50%,-50%)scale(0.9);
-  border-radius:12px; overflow:hidden;
-  background:#ffffff00; box-shadow:0 4px 16px rgba(0,0,0,.25);
-}
-.chart-panel iframe{
-  width:100%; height:100%; border:0; overflow:hidden !important;
-  scrollbar-width:none !important;
-}
-.chart-panel iframe::-webkit-scrollbar{display:none !important;}
-
-#status{
-  position:fixed; left:12px; bottom:12px; z-index:10;
-  background:#fffE; padding:6px 10px; border-radius:8px;
-  font-size:8px; font-weight:500; color:#111; opacity:.85;
-}
-@keyframes tinyPulse{0%,97%,100%{opacity:1}98.5%{opacity:.985}}
-.stage{animation:tinyPulse 300s linear infinite;}
 </style>
 </head>
 <body>
 
-<div class="stage" id="stage">
-  <div id="peopleV" class="val"><span id="v-people">--</span></div>
-  <div id="foodV" class="val"><span id="v-food">--</span></div>
-  <div id="transportV" class="val"><span id="v-transport">--</span></div>
-  <div id="plasticV" class="val"><span id="v-plastic">--</span></div>
-  <div id="moveV" class="val"><span id="v-move">--</span></div>
+<div class="stage" id="stage" aria-label="校園減碳看板">
+  <div id="peopleV" class="val" aria-label="人員指標"><span id="v-people">--</span></div>
+  <div id="foodV" class="val" aria-label="飲食指標"><span id="v-food">--</span></div>
+  <div id="transportV" class="val" aria-label="運輸指標"><span id="v-transport">--</span></div>
+  <div id="plasticV" class="val" aria-label="塑膠減量指標"><span id="v-plastic">--</span></div>
+  <div id="moveV" class="val" aria-label="行動參與指標"><span id="v-move">--</span></div>
 
   <!-- Google 試算表圖表 -->
   <div class="chart-panel" id="chart-panel">
     <iframe
       id="chartFrame"
+      title="減碳趨勢圖"
       width="100%" height="100%"
       frameborder="0" scrolling="no"
       style="overflow:hidden;"
-      seamless
-      src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTA18hRqu4Ch6iF2CukbRUQ0Ef8BDihdak7Cfkl7FzRacgKLc7Mynhvi06jkULpI5W1yBnepZpy61gA/pubchart?oid=558188415&amp;format=interactive"
-      allowfullscreen>
+      src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTA18hRqu4Ch6iF2CukbRUQ0Ef8BDihdak7Cfkl7FzRacgKLc7Mynhvi06jkULpI5W1yBnepZpy61gA/pubchart?oid=558188415&amp;format=interactive">
     </iframe>
   </div>
 </div>
 
-<div id="status">初始化中…（E 微調 / F 全螢幕 / S 複製座標）</div>
+<!-- 螢幕閱讀器友善狀態條 -->
+<div id="status" role="status" aria-live="polite">初始化中…（E 微調 / F 全螢幕 / S 儲存座標 / D 重置座標）</div>
 
 <script>
-const API_EXEC = "https://script.google.com/macros/s/AKfycby7d9Zoo-JCCojFWN6aG10N8v5PYyTs3pjTReAGiuwU3aJoQUkBxU_2-0EBPdziMQcN/exec";
-const REFRESH_MS = 30000;
-const nf = new Intl.NumberFormat('zh-Hant-TW',{ maximumFractionDigits:2 });
-const $=id=>document.getElementById(id);
-const st=t=>$("status").textContent=t;
+(()=>{
+  // ====== 可調參數（含 URL Query 覆蓋） ======
+  const params = new URLSearchParams(location.search);
+  const API_EXEC = "https://script.google.com/macros/s/AKfycby7d9Zoo-JCCojFWN6aG10N8v5PYyTs3pjTReAGiuwU3aJoQUkBxU_2-0EBPdziMQcN/exec";
+  const REFRESH_MS = +(params.get('refresh')||getCssNumber('--refresh-ms')||30000);
+  const AUTO_FS = +(params.get('autofs')||getCssNumber('--autofs')||1) === 1;
+  const SCALE = +(params.get('scale')||getCssNumber('--scale')||0.85);
 
-function show(d){
-  $("v-people").textContent = nf.format(d.people);
-  $("v-food").textContent = nf.format(d.food);
-  $("v-transport").textContent = nf.format(d.transport);
-  $("v-plastic").textContent = nf.format(d.plastic);
-  $("v-move").textContent = nf.format(d.move);
-}
-function onData(payload){
-  try{
-    if(!payload?.ok) throw new Error(payload.error||"API error");
-    show(payload.data);
-    st("✅ 已更新："+payload.data.updatedAt);
-    refreshChart(); 
-  }catch(e){ st("❌ "+e.message); }
-}
-function loadOnce(){
-  const s=document.createElement("script");
-  s.src=API_EXEC+"?callback=onData&_ts="+Date.now();
-  s.onerror=()=>st("❌ 載入失敗");
-  document.body.appendChild(s);
-}
-loadOnce(); setInterval(loadOnce,REFRESH_MS);
+  const nf = new Intl.NumberFormat('zh-Hant-TW', { maximumFractionDigits: 2 });
+  const $ = id => document.getElementById(id);
+  const st = t => { const el=$("status"); el.textContent=t; };
 
-// iframe 同步重載
-const chartFrame=$("chartFrame"), chartBase=chartFrame.src;
-function refreshChart(){
-  chartFrame.src = chartBase + (chartBase.includes('?')?'&':'?') + '_ts=' + Date.now();
-}
-setInterval(refreshChart, REFRESH_MS);
+  // 如果以 query 指定 scale，立即覆蓋 CSS 變數
+  if (!isNaN(SCALE)) document.documentElement.style.setProperty('--scale', String(SCALE));
 
-// ✅ 全螢幕（支援 F 鍵、點擊任意處、Safari 相容）
-function enterFS(){
-  const el=document.documentElement;
-  (el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen||el.mozRequestFullScreen)?.call(el);
-}
-function exitFS(){
-  (document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen||document.mozCancelFullScreen)?.call(document);
-}
-document.addEventListener("keydown",e=>{
-  if(e.key.toLowerCase()==="f"){
-    document.fullscreenElement ? exitFS() : enterFS();
+  function getCssNumber(name){
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v ? parseFloat(v) : NaN;
   }
-});
-document.addEventListener("click",()=>{
-  if(!document.fullscreenElement) enterFS();
-});
 
-// 微調模式
-let tune=false, active=null, current=null;
-const ids=["peopleV","foodV","transportV","plasticV","moveV","chart-panel"];
-function setDraggable(ok){
+  // ====== 數據顯示 ======
+  function show(d){
+    $('v-people').textContent = nf.format(d.people ?? 0);
+    $('v-food').textContent = nf.format(d.food ?? 0);
+    $('v-transport').textContent = nf.format(d.transport ?? 0);
+    $('v-plastic').textContent = nf.format(d.plastic ?? 0);
+    $('v-move').textContent = nf.format(d.move ?? 0);
+  }
+
+  // ====== JSONP 取得資料（含逾時與取消） ======
+  let lastToken = 0;
+  function loadOnce(){
+    const token = ++lastToken;
+    const cbName = `cb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const url = `${API_EXEC}?callback=${cbName}&_ts=${Date.now()}`;
+    const s = document.createElement('script');
+    s.src = url; s.async = true; s.onerror = ()=> st('❌ 資料載入失敗');
+
+    const timeout = setTimeout(()=>{
+      // JSONP 無法中止，但我們可以忽略逾時回傳
+      st('⌛ 連線逾時，稍後自動重試…');
+      cleanup();
+    }, Math.min(REFRESH_MS - 500, 10000));
+
+    window[cbName] = (payload)=>{
+      if (token !== lastToken) return; // 已有更新的請求，忽略過期回應
+      try{
+        if(!payload?.ok) throw new Error(payload?.error || 'API error');
+        show(payload.data);
+        st(`✅ 已更新：${payload.data.updatedAt||new Date().toLocaleString('zh-TW')}`);
+        refreshChart();
+      }catch(e){ st('❌ '+ e.message); }
+      cleanup();
+    };
+
+    function cleanup(){
+      clearTimeout(timeout);
+      delete window[cbName];
+      s.remove();
+    }
+
+    document.body.appendChild(s);
+  }
+
+  // ====== Iframe 同步重載 ======
+  const chartFrame = $('chartFrame');
+  const chartBase = chartFrame.getAttribute('src');
+  function refreshChart(){
+    // 避免污染瀏覽歷史，使用 replace 屬性（不可行於 iframe），改為在 src 加版本戳
+    chartFrame.src = chartBase + (chartBase.includes('?')?'&':'?') + '_ts=' + Date.now();
+  }
+
+  // ====== 可見性：背景時暫停輪詢 ======
+  let dataTimer = null, chartTimer = null;
+  function startTimers(){
+    stopTimers();
+    loadOnce();
+    dataTimer = setInterval(loadOnce, REFRESH_MS);
+    chartTimer = setInterval(refreshChart, REFRESH_MS);
+  }
+  function stopTimers(){
+    if (dataTimer) clearInterval(dataTimer), dataTimer=null;
+    if (chartTimer) clearInterval(chartTimer), chartTimer=null;
+  }
+  document.addEventListener('visibilitychange', ()=>{
+    if (document.hidden) {
+      st('⏸ 已暫停更新（視窗背景）');
+      stopTimers();
+    } else {
+      st('▶ 重新啟動更新…');
+      startTimers();
+    }
+  });
+  window.addEventListener('pagehide', stopTimers);
+  window.addEventListener('unload', stopTimers);
+
+  // 立即啟動
+  startTimers();
+
+  // ====== 全螢幕（F 鍵、雙擊；可用 ?autofs=0 關閉自動嘗試） ======
+  const canFS = !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen || document.documentElement.msRequestFullscreen || document.documentElement.mozRequestFullScreen);
+  function enterFS(){
+    const el=document.documentElement;
+    (el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen||el.mozRequestFullScreen)?.call(el).catch?.(()=>{});
+  }
+  function exitFS(){
+    (document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen||document.mozCancelFullScreen)?.call(document);
+  }
+  document.addEventListener('keydown',e=>{
+    if(e.key.toLowerCase()==='f' && canFS){
+      document.fullscreenElement ? exitFS() : enterFS();
+    }
+  });
+  document.addEventListener('dblclick',()=>{ if(canFS) enterFS(); });
+  if (AUTO_FS && canFS) {
+    // 嘗試一次（有些瀏覽器會忽略，無妨）
+    setTimeout(()=>enterFS(), 800);
+  }
+
+  // ====== 微調模式（E 開關 / S 儲存至 localStorage / D 重置） ======
+  let tune=false, active=null;
+  const ids=["peopleV","foodV","transportV","plasticV","moveV","chart-panel"];
+
+  function setDraggable(ok){
+    ids.forEach(id=>{
+      const el=$(id);
+      el.style.pointerEvents=ok?"auto":"none";
+      el.style.cursor=ok?"move":"default";
+    });
+    st(ok?"🛠 微調中（E 退出 / S 儲存座標 / D 重置）":"✅ 更新完成（E 微調 / F 全螢幕）");
+  }
+  document.addEventListener('keydown',e=>{
+    const k=e.key.toLowerCase();
+    if(k==='e'){ tune=!tune; setDraggable(tune); }
+    if(k==='s' && tune){ savePositions(); }
+    if(k==='d' && tune){ resetPositions(); }
+  });
+
   ids.forEach(id=>{
     const el=$(id);
-    el.style.pointerEvents=ok?"auto":"none";
-    el.style.cursor=ok?"move":"default";
+    el.addEventListener('pointerdown',e=>{ if(!tune) return; active=el; el.setPointerCapture(e.pointerId); });
+    el.addEventListener('pointermove',e=>{
+      if(!tune||active!==el)return;
+      const r=$('stage').getBoundingClientRect();
+      const x=((e.clientX-r.left)/r.width)*100;
+      const y=((e.clientY-r.top)/r.height)*100;
+      const xs = (Math.round(x*10)/10).toFixed(1)+"%"; // 0.1% 對齊
+      const ys = (Math.round(y*10)/10).toFixed(1)+"%";
+      document.documentElement.style.setProperty(`--${id}-left`, xs);
+      document.documentElement.style.setProperty(`--${id}-top`, ys);
+    });
+    el.addEventListener('pointerup',()=>{ active=null; });
   });
-  st(ok?"🛠 微調中（E 退出 / S 複製座標）":"✅ 更新完成（E 微調 / F 全螢幕）");
-}
-document.addEventListener("keydown",e=>{
-  const k=e.key.toLowerCase();
-  if(k==="e"){ tune=!tune; setDraggable(tune); }
-  if(k==="s"&&tune){
+
+  const LS_KEY='carbon-dash-positions';
+  function savePositions(){
     const g=getComputedStyle(document.documentElement);
-    const vars=ids.map(id=>{
-      const t=g.getPropertyValue(`--${id}-top`).trim();
-      const l=g.getPropertyValue(`--${id}-left`).trim();
-      return `--${id}-top:${t}; --${id}-left:${l};`;
-    }).join("\n");
-    navigator.clipboard.writeText("/* 貼回 :root{} 即可固定 */\n"+vars);
-    alert("已複製座標：\n\n"+vars);
+    const vars={};
+    ids.forEach(id=>{
+      vars[`--${id}-top`]=g.getPropertyValue(`--${id}-top`).trim();
+      vars[`--${id}-left`]=g.getPropertyValue(`--${id}-left`).trim();
+    });
+    localStorage.setItem(LS_KEY, JSON.stringify(vars));
+    navigator.clipboard?.writeText("/* 貼回 :root{} 即可固定 */\n"+Object.entries(vars).map(([k,v])=>`${k}:${v};`).join("\n"));
+    st('💾 已儲存座標（亦已複製到剪貼簿）');
   }
-});
-ids.forEach(id=>{
-  const el=$(id);
-  el.addEventListener("pointerdown",e=>{if(!tune)return;active=el;current=id;el.setPointerCapture(e.pointerId);});
-  el.addEventListener("pointermove",e=>{
-    if(!tune||active!==el)return;
-    const r=$("stage").getBoundingClientRect();
-    const x=((e.clientX-r.left)/r.width)*100;
-    const y=((e.clientY-r.top)/r.height)*100;
-    document.documentElement.style.setProperty(`--${id}-left`,x.toFixed(2)+"%");
-    document.documentElement.style.setProperty(`--${id}-top`,y.toFixed(2)+"%");
-  });
-  el.addEventListener("pointerup",()=>active=null);
-});
+  function loadPositions(){
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      if(!raw) return;
+      const vars = JSON.parse(raw);
+      for(const [k,v] of Object.entries(vars)){
+        document.documentElement.style.setProperty(k, v);
+      }
+      st('📦 已載入上次的座標配置');
+    }catch{ /* ignore */ }
+  }
+  function resetPositions(){
+    localStorage.removeItem(LS_KEY);
+    st('↩ 已清除已儲存座標（重新整理後恢復預設）');
+  }
+  loadPositions();
+})();
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
