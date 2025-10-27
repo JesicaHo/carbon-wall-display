@@ -110,6 +110,7 @@ function onData(payload){
     if(!payload?.ok) throw new Error(payload.error||"API error");
     show(payload.data);
     st("✅ 已更新："+payload.data.updatedAt);
+    refreshChart(); 
   }catch(e){ st("❌ "+e.message); }
 }
 function loadOnce(){
