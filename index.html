@@ -6,14 +6,22 @@
 <title>校園減碳大作戰</title>
 <style>
 :root{
-  --scale: 0.85;
-  --peopleV-top: 39.45%; --peopleV-left: 22.34%;
-  --foodV-top: 65.06%; --foodV-left: 29.12%;
-  --transportV-top: 64.85%; --transportV-left: 72.95%;
-  --plasticV-top: 83.87%; --plasticV-left: 30.07%;
-  --moveV-top: 83.93%; --moveV-left: 72.01%;
-  --chart-top: 37%; --chart-left: 69%; --chart-width: 62vw; --chart-height: 22vh;
-}
+      --scale: 0.86;
+      /* 圖表置中偏上、加寬 */
+      --chart-top: 38.3%;
+      --chart-left: 69.7%;
+      --chart-width: 74.8vw;
+      --chart-height: 26vh;
+      /* 指標分四象限：左上/右上/左下/右下 */
+      --peopleV-top: 42%;  --peopleV-left: 20%;  /* 可用於放「人次」或其他數值 */
+      --foodV-top: 58%;    --foodV-left: 28%;
+      --transportV-top: 58%; --transportV-left: 72%;
+      --plasticV-top: 78%; --plasticV-left: 28%;
+      --moveV-top: 78%;    --moveV-left: 72%;
+    }
+    .val{ font-size: 6.2vh; }
+    .chart-panel{ transform: translate(-50%,-50%) scale(0.73); }
+  }
 html, body{
   margin:0; height:100%; background:#000; color:#111;
   font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
@@ -186,6 +194,7 @@ ids.forEach(id=>{
 </script>
 </body>
 </html>
+
 
 
 
