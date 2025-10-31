@@ -94,7 +94,7 @@ html, body{
 <script>
 const API_EXEC = "https://script.google.com/macros/s/AKfycby7d9Zoo-JCCojFWN6aG10N8v5PYyTs3pjTReAGiuwU3aJoQUkBxU_2-0EBPdziMQcN/exec";
 const REFRESH_MS = 30000;
-const nf = new Intl.NumberFormat('zh-Hant-TW',{ maximumFractionDigits:2 });
+const nf = new Intl.NumberFormat('zh-Hant-TW',{ maximumFractionDigits:1 });
 const $=id=>document.getElementById(id);
 const st=t=>$("status").textContent=t;
 
@@ -188,5 +188,6 @@ document.addEventListener('click',()=>{ if(canFS) enterFS(); });
 </script>
 </body>
 </html>
+
 
 
